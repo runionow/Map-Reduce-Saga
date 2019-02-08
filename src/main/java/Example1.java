@@ -9,13 +9,12 @@ import common.schedulars.Task;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 
 /**
  * Assumptions
  * ===========
- * 1. As we dont have a GFS I am manually keeping all the files which are divided in multiple and are
+ * 1. As we dont have a GFS I am manually keeping all the files divided and are
  * available in the form of chunks
  *
  * Example 1: WordCount
@@ -26,14 +25,14 @@ public class Example1 {
 
     /**
      * a. Creating your first mapper function
-     * ===================================
+     * =======================================
      * 1. To create Mapper function create static Mapper Class extend MapperBase[common.base.MapperBase] Class
      * 2. Override the base map function
      */
     public static class Mapper extends MapperBase{
         @Override
         public void map(Tuple t, OutCollector out) {
-            super.map(t, out);
+            System.out.println("I am your Mapper");
         }
     }
 
@@ -46,19 +45,11 @@ public class Example1 {
     public static class Reducer extends ReducerBase {
         @Override
         public void reduce(InCollector in, OutCollector out) {
-            super.reduce(in, out);
+            System.out.println("I am your Reducer");
         }
     }
 
     public static void main(String[] args) {
-
-        /**
-         * c. Creating your first Map Reduce Job
-         * =====================================
-         * 1. Create Job defintion with the help of a Job class provided with in the package
-         * 2. Attach Mapper Definition , Reducer Definition, All the individual file chunks array list
-         *    to job defintion
-         */
 
 
         ArrayList<String> filePath = new ArrayList<>();
@@ -69,16 +60,28 @@ public class Example1 {
 
         for(String file : files){
             filePath.add(helper+"\\"+file);
-            System.out.println(helper+"\\"+file);
+//            System.out.println(helper+"\\"+file);
         }
 
+        /**
+         * c. Creating your first Map Reduce Job
+         * =====================================
+         * 1. Create Job defintion with the help of a Job class provided with in the package
+         * 2. Attach Mapper Definition , Reducer Definition, All the individual file chunks array list
+         *    to job defintion
+         */
         Job job = new Job(Mapper.class
                 , Reducer.class,
-                Paths.get("/input"),
-                Paths.get("/arun/output"),
+                "/input",
+                "/arun/output",
                 "First MR Job");
 
-        job.start();
+        /**
+         * d. Executing the job
+         * =====================
+         * 1. Pass the job defintion to the executor function
+         */
+        Executor.start(job);
 
 
         // For each file start a map job

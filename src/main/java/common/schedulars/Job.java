@@ -3,14 +3,14 @@ package common.schedulars;
 import common.base.MapperBase;
 import common.base.ReducerBase;
 
-import java.nio.file.Path;
+import java.io.Serializable;
 
-public class Job {
+public class Job implements Serializable {
 
     protected Class<? extends MapperBase> mapper;
     protected Class<? extends ReducerBase> reducer;
-    protected Path input;
-    protected Path output;
+    protected String input;
+    protected String output;
     protected final String jobName;
 
     public Job(String jobName) {
@@ -19,7 +19,7 @@ public class Job {
 
     public Job(Class<? extends MapperBase> mapper,
                Class<? extends ReducerBase> reducer,
-               Path input, Path output,
+               String input, String output,
                String jobName) {
         this.jobName = jobName;
         this.mapper = mapper;
@@ -36,15 +36,15 @@ public class Job {
         return reducer;
     }
 
-    public Path getInput() {
+    public String getInput() {
         return input;
     }
 
-    public Path getOutput() {
+    public String getOutput() {
         return output;
     }
 
-    public void setOutput(Path output) {
+    public void setOutput(String output) {
         this.output = output;
     }
 
@@ -53,13 +53,6 @@ public class Job {
     }
 
 
-    public void start() {
-//        TODO 1. Verify the job details
-//        TODO 2. Submit the job to the Manager
 
-
-
-
-    }
 }
 
