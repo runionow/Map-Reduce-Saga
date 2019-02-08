@@ -11,7 +11,7 @@ public class StartManager {
         // Header goes in here.
         MainHeader.title();
 
-        // Thread for recieving the job contents from the client
+        // Thread for Receiving the job contents from the client
         Thread obj = new Thread(new PackageHandler());
         obj.start();
 
@@ -19,7 +19,11 @@ public class StartManager {
         Thread workers = new Thread(new WorkerHandler());
         workers.start();
 
-        // Pass Task Defintions to the worker nodes
+        // Count the number of worker nodes
+        // and store the socket connections for future communication for task distribution
+
+
+        // Pass Task Definitions to the worker nodes
 
         // Get the heart beat of the workers
 

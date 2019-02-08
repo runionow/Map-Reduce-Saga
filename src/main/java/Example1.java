@@ -72,9 +72,9 @@ public class Example1 {
          */
         Job job = new Job(Mapper.class
                 , Reducer.class,
-                "/input",
+                filePath,
                 "/arun/output",
-                "First MR Job");
+                "Word count");
 
         /**
          * d. Executing the job
@@ -85,6 +85,7 @@ public class Example1 {
 
 
         // For each file start a map job
+        // TODO this job should be moved to the workers
         Task mapTask = new Task(filePath.get(0), Mapper.class);
 
         try {

@@ -4,12 +4,13 @@ import common.base.MapperBase;
 import common.base.ReducerBase;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 
 public class Job implements Serializable {
 
     protected Class<? extends MapperBase> mapper;
     protected Class<? extends ReducerBase> reducer;
-    protected String input;
+    protected ArrayList<String> input;
     protected String output;
     protected final String jobName;
 
@@ -19,7 +20,7 @@ public class Job implements Serializable {
 
     public Job(Class<? extends MapperBase> mapper,
                Class<? extends ReducerBase> reducer,
-               String input, String output,
+               ArrayList<String> input, String output,
                String jobName) {
         this.jobName = jobName;
         this.mapper = mapper;
@@ -36,7 +37,7 @@ public class Job implements Serializable {
         return reducer;
     }
 
-    public String getInput() {
+    public ArrayList<String> getInput() {
         return input;
     }
 

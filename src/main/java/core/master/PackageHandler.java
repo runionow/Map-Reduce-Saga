@@ -11,42 +11,23 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Date;
+
+// TODO Upon receiving the job divide and the send tasks based on the worker nodes availability
 
 public class PackageHandler implements Runnable {
 
     protected static final int BACKLOG = 25;
-    protected static final int LISTEN_PORT = 7777;
-
-    public static void listener() throws IOException, ClassNotFoundException {
-        InetAddress addr = InetAddress.getLocalHost();
-        ServerSocket ss = new ServerSocket(LISTEN_PORT,BACKLOG,addr);
-
-        // Server Socket waiting for connection
-        Socket socket = ss.accept();
-        InputStream is = socket.getInputStream();
-
-        ObjectInputStream objectInputStream = new ObjectInputStream(is);
-        Job jobDescription = (Job) objectInputStream.readObject();
-
-        // After recieving the package close the socket
-        System.out.println("Package has been recieved" + new Date());
-
-        // Acknowledge and close the sockets
-        System.out.println("Socket connection closed");
-        ss.close();
-        socket.close();
-    }
+    protected static final int MANAGER_LISTEN_PORT = 7777;
+    protected static final int WORKER_PORT = 9080;
 
     @Override
     public void run() {
         // don't need to specify a hostname, it will be the current machine
         ServerSocket ss = null;
         try {
-            ss = new ServerSocket(LISTEN_PORT);
+            ss = new ServerSocket(MANAGER_LISTEN_PORT);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -57,7 +38,7 @@ public class PackageHandler implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Connection from " + socket + "!");
+        System.out.println("Received job from client " + socket + "!");
 
         // get the input stream from the connected socket
         InputStream inputStream = null;
@@ -94,6 +75,7 @@ public class PackageHandler implements Runnable {
         try {
             Constructor conMap = mapper.getConstructor();
             Constructor conRed = reducer.getConstructor();
+
             map = (MapperBase) conMap.newInstance();
             reduce = (ReducerBase) conRed.newInstance();
 
@@ -103,6 +85,8 @@ public class PackageHandler implements Runnable {
             return;
         }
 
+
+        // Map and reduce Tester
         map.map(new Tuple("String", 1), new Collector());
         reduce.reduce(new Collector(), new Collector());
     }
