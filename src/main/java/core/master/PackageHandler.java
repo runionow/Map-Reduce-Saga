@@ -77,6 +77,12 @@ public class PackageHandler implements Runnable {
             e.printStackTrace();
         }
 
+
+        // What to do after receiving the job
+
+
+        // Check the hashMap if it has any open connections
+
         Class<? extends MapperBase> mapper = recievedJob.getMapper();
         Class<? extends ReducerBase> reducer = recievedJob.getReducer();
 
@@ -102,17 +108,19 @@ public class PackageHandler implements Runnable {
         map.map(new Tuple("String", 1), new Collector());
         reduce.reduce(new Collector(), new Collector());
 
-        /**
-         * File location
-         *
-         *
-         */
+
         // Task - Send jobs to worker
+        // Keep an object to keep track of all the changes that happening to the task
+        // everything is available in recievedJob
+
         ArrayList<String> files = recievedJob.getInput();
+
+
         OutputStream out = null;
         ObjectOutputStream sendTask = null;
-        for (int port : WorkerHandler.workerSockets.keySet()) {
 
+
+        for (int port : WorkerHandler.workerSockets.keySet()) {
             Task mapTask = new Task(recievedJob.getInput().get(0), recievedJob.getMapper());
             Socket socket_task = WorkerHandler.workerSockets.get(port);
 
@@ -125,7 +133,6 @@ public class PackageHandler implements Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
 
 

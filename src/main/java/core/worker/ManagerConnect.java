@@ -18,23 +18,9 @@ import java.net.Socket;
 
 public class ManagerConnect implements Runnable {
 
-    @Override
-    public void run() {
-        // Wait until manager is available
-        int retryCount = 0;
-        try {
-            waitToConnect(retryCount);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        while (true) {
-
-        }
-    }
-
     public static void waitToConnect(int retryCount) throws InterruptedException {
         Socket socket = null;
-        System.out.println("Looking for a Manager");
+        System.out.println("\nLooking for a Manager");
         while (true) {
             try {
                 socket = new Socket("localhost", 9080);
@@ -57,12 +43,12 @@ public class ManagerConnect implements Runnable {
             InputStream in = socket.getInputStream();
             ObjectInputStream task_to_do = new ObjectInputStream(in);
             Task task = (Task) task_to_do.readObject();
-            in.close();
 
             Constructor conMap = task.getMapper().getConstructor();
             map = (MapperBase) conMap.newInstance();
             map.map(new Tuple("String", 1), new Collector());
-
+//            socket.close();
+            System.out.println("Socket is closed");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -77,6 +63,20 @@ public class ManagerConnect implements Runnable {
             e.printStackTrace();
         }
 
+    }
 
+    @Override
+    public void run() {
+        // Wait until manager is available
+        int retryCount = 0;
+        try {
+            waitToConnect(retryCount);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // Kep the process alive
+        while (true) {
+
+        }
     }
 }

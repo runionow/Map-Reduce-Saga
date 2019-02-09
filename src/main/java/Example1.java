@@ -17,7 +17,7 @@ import java.util.ArrayList;
  *
  * Example 1: WordCount
  * ====================
- * For this mapReduce I am using ebook which i have taken from the project gutenberg.
+ * For this mapReduce example i am using ebook which i have taken from the project gutenberg.
  */
 public class Example1 {
 
