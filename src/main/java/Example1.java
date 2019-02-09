@@ -5,10 +5,8 @@ import common.collectors.InCollector;
 import common.collectors.OutCollector;
 import common.schedulars.Executor;
 import common.schedulars.Job;
-import common.schedulars.Task;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 /**
@@ -82,23 +80,5 @@ public class Example1 {
          * 1. Pass the job defintion to the executor function
          */
         Executor.start(job);
-
-
-        // For each file start a map job
-        // TODO this job should be moved to the workers
-        Task mapTask = new Task(filePath.get(0), Mapper.class);
-
-        try {
-            mapTask.runMapper();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        }
-
     }
 }

@@ -2,17 +2,19 @@ package common.schedulars;
 
 import common.base.MapperBase;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.TreeMap;
 
-public class Task {
+public class Task implements Serializable {
 
     private final String inputFilePath;
+
+    public Class<? extends MapperBase> getMapper() {
+        return mapper;
+    }
+
     private final Class<? extends MapperBase> mapper;
     private final TreeMap<String, Integer> map = new TreeMap<>();
 

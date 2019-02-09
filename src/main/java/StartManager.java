@@ -25,7 +25,7 @@ public class StartManager {
 
         // Pass Task Definitions to the worker nodes
 
-        // Get the heart beat of the workers
+        // Get the heart beat of the Worker
 
         // thread for keeping track of the status pf the nodes and for keeping the process alive
         // until the job is completed.
