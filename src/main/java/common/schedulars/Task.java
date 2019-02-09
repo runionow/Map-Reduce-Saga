@@ -1,8 +1,9 @@
 package common.schedulars;
 
 import common.base.MapperBase;
+import common.base.Runner;
 
-import java.io.*;
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.TreeMap;
@@ -11,7 +12,7 @@ public class Task implements Serializable {
 
     private final String inputFilePath;
 
-    public Class<? extends MapperBase> getMapper() {
+    public Class<? extends Runner> getMapper() {
         return mapper;
     }
 
@@ -29,32 +30,32 @@ public class Task implements Serializable {
         MapperBase mapper = (MapperBase) cons.newInstance();
 
         // TODO For each line in the input text, run a mapper
-        try {
-            BufferedReader bf = new BufferedReader(new FileReader(inputFilePath));
-            String line;
-            int count = 0;
-            while ((line = bf.readLine()) != null) {
-                if(line.trim().length() > 0 ) {
-                    String[] keys = line.trim().replaceAll("[-+.^:,'\"?!*#}]","").split(" ");
-                    for (String key : keys) {
-                        // TODO Call map function every single time from the above reflection
-                        if (!map.containsKey(key)) {
-                            map.put(key, 1);
-                        } else {
-                            map.put(key, map.get(key) + 1);
-                        }
-                    }
-                }
-            }
-
-            for(String key : map.keySet()) {
-                System.out.println(key + ":" + map.get(key) );
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            BufferedReader bf = new BufferedReader(new FileReader(inputFilePath));
+//            String line;
+//            int count = 0;
+//            while ((line = bf.readLine()) != null) {
+//                if(line.trim().length() > 0 ) {
+//                    String[] keys = line.trim().replaceAll("[-+.^:,'\"?!*#}]","").split(" ");
+//                    for (String key : keys) {
+//                        // TODO Call map function every single time from the above reflection
+//                        if (!map.containsKey(key)) {
+//                            map.put(key, 1);
+//                        } else {
+//                            map.put(key, map.get(key) + 1);
+//                        }
+//                    }
+//                }
+//            }
+//
+//            for(String key : map.keySet()) {
+//                System.out.println(key + ":" + map.get(key) );
+//            }
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
 
     }

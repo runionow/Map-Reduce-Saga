@@ -14,24 +14,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-// TODO Upon receiving the job divide and the send tasks based on the worker nodes availability
+
 
 public class PackageHandler implements Runnable {
 
     protected static final int BACKLOG = 25;
     protected static final int MANAGER_LISTEN_PORT = 7777;
     protected static final int WORKER_PORT = 9080;
-
-    public void sendTask(Job job, Socket serverSocket) {
-        try {
-            OutputStream outputStream = serverSocket.getOutputStream();
-            ObjectOutputStream jobObject = new ObjectOutputStream(outputStream);
-            jobObject.writeObject(job);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public void run() {
@@ -77,12 +66,6 @@ public class PackageHandler implements Runnable {
             e.printStackTrace();
         }
 
-
-        // What to do after receiving the job
-
-
-        // Check the hashMap if it has any open connections
-
         Class<? extends MapperBase> mapper = recievedJob.getMapper();
         Class<? extends ReducerBase> reducer = recievedJob.getReducer();
 
@@ -108,42 +91,33 @@ public class PackageHandler implements Runnable {
         map.map(new Tuple("String", 1), new Collector());
         reduce.reduce(new Collector(), new Collector());
 
+        // TODO Upon receiving the job divide and the send tasks based on the worker nodes availability
 
-        // Task - Send jobs to worker
-        // Keep an object to keep track of all the changes that happening to the task
-        // everything is available in recievedJob
 
-        ArrayList<String> files = recievedJob.getInput();
+        sendTask(recievedJob);
 
+    }
+
+
+    public void sendTask(Job job) {
+        ArrayList<String> files = job.getInput();
 
         OutputStream out = null;
         ObjectOutputStream sendTask = null;
 
-
         for (int port : WorkerHandler.workerSockets.keySet()) {
-            Task mapTask = new Task(recievedJob.getInput().get(0), recievedJob.getMapper());
+            Task mapTask = new Task(files.get(0), job.getMapper());
             Socket socket_task = WorkerHandler.workerSockets.get(port);
 
             try {
                 out = socket_task.getOutputStream();
                 sendTask = new ObjectOutputStream(out);
-                sendTask.reset();
+                sendTask.flush();
                 sendTask.writeObject(mapTask);
-                out.close();
+                out.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
-
-        // Task send job to worker
-        /***
-         * sendTask(Job,serverSocket);
-         */
-
-        //    WorkerHandler.workerSockets
-
-
-
     }
 }

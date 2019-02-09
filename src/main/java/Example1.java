@@ -49,7 +49,6 @@ public class Example1 {
 
     public static void main(String[] args) {
 
-
         ArrayList<String> filePath = new ArrayList<>();
 
         String helper = System.getProperty("user.dir") +"\\src\\input";

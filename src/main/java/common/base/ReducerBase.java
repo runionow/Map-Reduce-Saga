@@ -5,7 +5,7 @@ import common.collectors.OutCollector;
 
 import java.io.Serializable;
 
-public class ReducerBase<Key,Value> implements Serializable {
+public class ReducerBase<Key, Value> implements Serializable, Runner {
     public void reduce(InCollector<Key,Value> in, OutCollector<Key,Value> out){
 
     }
