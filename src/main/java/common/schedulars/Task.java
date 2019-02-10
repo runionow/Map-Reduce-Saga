@@ -1,34 +1,55 @@
 package common.schedulars;
 
+import common.Status;
 import common.base.MapperBase;
-import common.base.Runner;
+import common.base.ReducerBase;
 
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.TreeMap;
 
 public class Task implements Serializable {
 
+    private final Class<? extends MapperBase> mapper;
+    private final Class<? extends ReducerBase> reducer;
+    private final TreeMap<String, Integer> map = new TreeMap<>();
     private final String inputFilePath;
+    private final String outputFilePath;
+    private Status status = Status.MAP_READY;
 
-    public Class<? extends Runner> getMapper() {
+    public Task(String inputFilePath, String outputFilePath, Class<? extends MapperBase> mapper, Class<? extends ReducerBase> reducer) {
+        this.inputFilePath = inputFilePath;
+        this.mapper = mapper;
+        this.reducer = reducer;
+        this.outputFilePath = outputFilePath;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public Class<? extends ReducerBase> getReducer() {
+        return reducer;
+    }
+
+    public Class<? extends MapperBase> getMapper() {
         return mapper;
     }
 
-    private final Class<? extends MapperBase> mapper;
-    private final TreeMap<String, Integer> map = new TreeMap<>();
-
-    public Task(String inputFilePath, Class< ? extends MapperBase> mapper) {
-        this.inputFilePath = inputFilePath;
-        this.mapper = mapper;
+    public String getInputFilePath() {
+        return inputFilePath;
     }
 
+    public String getOutputFilePath() {
+        return outputFilePath;
+    }
 
-    public void runMapper() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Constructor cons = mapper.getConstructor();
-        MapperBase mapper = (MapperBase) cons.newInstance();
-
+    public void runMapper() {
+//        Constructor cons = mapper.getConstructor();
+//        MapperBase mapper = (MapperBase) cons.newInstance();
         // TODO For each line in the input text, run a mapper
 //        try {
 //            BufferedReader bf = new BufferedReader(new FileReader(inputFilePath));
@@ -59,8 +80,5 @@ public class Task implements Serializable {
 
 
     }
-
-
-
 
 }

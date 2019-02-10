@@ -23,13 +23,14 @@ public class Worker implements Runnable {
     @Override
     public void run() {
         /**
-         * Socket Heartbeat 💕
+         * Socket Heartbeat 💕 and worker task status
          */
         boolean alive = true;
         while (alive) {
             try {
                 System.out.println(clientSocket.getInputStream().read());
                 System.out.println("Hello");
+                // TODO HeartBeat failure and observe task status of the worker node here
                 clientSocket.getInputStream().close();
                 Thread.sleep(2000);
             } catch (IOException e) {

@@ -8,7 +8,9 @@ public enum Status {
     WORKER_FAIL(5),
     JOB_FAIL(6),
     MAP_TASK(7),
-    REDUCE_TASK(8);
+    REDUCE_TASK(8),
+    MAP_READY(9),
+    REDUCE_READY(10);
 
     int error_code = 0;
 

@@ -10,9 +10,9 @@ import java.util.concurrent.Executors;
 public class WorkerHandler implements Runnable {
     private static final int WORKER_PORT = 9080;
     private static final int BUFFER_SIZE = 2044;
-    private static volatile int workerNodeCount = 0;
 
     public static volatile HashMap<Integer, Socket> workerSockets = new HashMap<>();
+    public static volatile HashMap<Integer, Socket> availableNode = new HashMap<>();
 
     final ExecutorService clientProcessingPool = Executors.newFixedThreadPool(5);
 
