@@ -1,6 +1,7 @@
 import common.Tuple;
 import common.base.MapperBase;
 import common.base.ReducerBase;
+import common.collectors.Collector;
 import common.collectors.InCollector;
 import common.collectors.OutCollector;
 import common.schedulars.Executor;
@@ -8,6 +9,8 @@ import common.schedulars.Job;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Assumptions
@@ -27,10 +30,16 @@ public class Example1 {
      * 1. To create Mapper function create static Mapper Class extend MapperBase[common.base.MapperBase] Class
      * 2. Override the base map function
      */
-    public static class Mapper extends MapperBase{
+    public static class Mapper extends MapperBase<String, Integer> {
         @Override
-        public void map(Tuple t, OutCollector out) {
-            System.out.println("I am your Mapper");
+        public void map(Tuple<String, Integer> t, Collector<String, Integer> out) {
+            // For every row break into individual rows and add it to the collector
+            if (t.getKey().trim().length() > 0) {
+                String[] keys = t.getKey().trim().replaceAll("[-+.^:,'\"?!*#}]", "").split(" ");
+                for (String key : keys) {
+                    out.collect(new Tuple<String, Integer>(key, 1));
+                }
+            }
         }
     }
 
@@ -40,10 +49,12 @@ public class Example1 {
      * 1. To create Reducer function create static Reducer Class extend MapperBase[common.base.ReducerBase] Class
      * 2. Override the base reduce function
      */
-    public static class Reducer extends ReducerBase {
+    public static class Reducer extends ReducerBase<String, Integer> {
+        Map<String, Integer> output = new HashMap<>();
+
         @Override
-        public void reduce(InCollector in, OutCollector out) {
-            System.out.println("I am your Reducer");
+        public void reduce(Map<String, InCollector<String, Integer>> input, OutCollector<String, Integer> out) {
+            System.out.println("I'm your reducer");
         }
     }
 

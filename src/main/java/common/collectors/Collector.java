@@ -2,13 +2,15 @@ package common.collectors;
 
 import common.Tuple;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class Collector<Key,Value> implements InCollector<Key,Value> , OutCollector<Key,Value> {
+public class Collector<Key, Value> implements InCollector<Key, Value>, OutCollector<Key, Value>, Serializable {
 
     private List<Tuple<Key,Value>> inter_tuples = new CopyOnWriteArrayList<>();
     private Iterator<Tuple<Key,Value>> tuple_iter = null;
+    private Map<Key, Value> final_sol = new TreeMap<>();
 
     public List<Tuple<Key,Value>> toList()
     {
@@ -33,7 +35,7 @@ public class Collector<Key,Value> implements InCollector<Key,Value> , OutCollect
     }
 
     public Map<Key,Collector<Key,Value>> intermediateCollectors() {
-        Map<Key,Collector<Key,Value>> out = new HashMap<>();
+        Map<Key, Collector<Key, Value>> out = new TreeMap<>();
         synchronized (this) {
             for ( Tuple<Key,Value> t : inter_tuples)
             {
@@ -49,6 +51,7 @@ public class Collector<Key,Value> implements InCollector<Key,Value> , OutCollect
         }
         return out;
     }
+
 
     @Override
     public void collect(Tuple<Key, Value> t) {

@@ -1,20 +1,16 @@
 package common;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Tuple<K,V> {
+public class Tuple<K, V> implements Serializable {
 
     private K map_key;
     private V map_value;
 
-    private Tuple(){
-        super();
-    }
-
     public Tuple(K key, V value){
-        this();
-        this.map_key = key;
-        this.map_value = value;
+        setKey(key);
+        setValue(value);
     }
 
 
@@ -22,7 +18,7 @@ public class Tuple<K,V> {
         return map_key;
     }
 
-    private void setKey(K map_key) {
+    public void setKey(K map_key) {
         this.map_key = map_key;
     }
 
@@ -30,7 +26,7 @@ public class Tuple<K,V> {
         return map_value;
     }
 
-    private void setValue(V map_value) {
+    public void setValue(V map_value) {
         this.map_value = map_value;
     }
 
@@ -46,5 +42,10 @@ public class Tuple<K,V> {
     @Override
     public int hashCode() {
         return Objects.hash(map_key, map_value);
+    }
+
+    @Override
+    public String toString() {
+        return getKey() + ":" + getValue();
     }
 }

@@ -1,6 +1,5 @@
 package core.master;
 
-import common.Status;
 import common.base.MapperBase;
 import common.base.ReducerBase;
 import common.schedulars.Job;
@@ -9,10 +8,7 @@ import common.schedulars.Task;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 
 public class PackageHandler implements Runnable {
@@ -20,8 +16,11 @@ public class PackageHandler implements Runnable {
     protected static final int BACKLOG = 25;
     protected static final int MANAGER_LISTEN_PORT = 7777;
     protected static final int WORKER_PORT = 9080;
+    public static Stack<Task> stackTask = new Stack<>();
     public static volatile Set<Integer> nodes_in_use = new HashSet<>();
-
+    public static volatile Stack<Task> stack_final = new Stack<>();
+    public static volatile Map<Integer, Task> stack_in_progress = new HashMap<>();
+    protected static Map<Integer, Task> task_handler = new HashMap<Integer, Task>();
 
     @Override
     public void run() {
@@ -79,46 +78,48 @@ public class PackageHandler implements Runnable {
         ArrayList<String> file_chunks = recievedJob.getInput();
         WorkerHandler.availableNode.putAll(WorkerHandler.workerSockets);
 
+
         // For each file chunk i am assigning a task.
         // Each task has initial status of MAP_READY
-        Task[] tasks = new Task[file_chunks.size()];
 
-        for (int i = 0; i < tasks.length; i++) {
-            tasks[i] = new Task(file_chunks.get(i),
+
+        Stack<Task> stack_final = new Stack<>();
+        Map<Integer, Task> stack_in_progress = new HashMap<>();
+
+        // Execute job only when atleast one worker node is available
+        HashMap<Integer, Socket> availableNodes = new HashMap<>();
+
+        // If any new nodes joined, add it to the available nodes
+        availableNodes.putAll(WorkerHandler.workerSockets);
+
+        // Insert all the jobs into the Map
+        for (int i = 0; i < recievedJob.getInput().size(); i++) {
+            stack_final.push(new Task(file_chunks.get(i),
                     recievedJob.getOutput(),
                     recievedJob.getMapper(),
-                    recievedJob.getReducer());
-        }
-
-        // Sending for 1 socket - testing
-        while (WorkerHandler.workerSockets.size() > 0) {
-            for (int keys : WorkerHandler.workerSockets.keySet()) {
-                if (tasks[0].getStatus() == Status.MAP_READY) {
-                    sendTask(tasks[0], keys);
-                    break;
-                }
-            }
+                    recievedJob.getReducer(), i));
         }
 
 
         // Wait until all the tasks are executes
+        while (!stack_final.isEmpty()) {
+            for (int i : WorkerHandler.availableNode.keySet()) {
+                sendTask(stack_final.pop(), i);
+                if (stack_final.isEmpty() && stack_in_progress.isEmpty()) {
+                    break;
+                }
+            }
+            break;
+        }
 
-        //
+        System.out.println("Map tasks are now completed");
 
-        // In progress tasks
-        Set<Task> task_status_map_ready = new HashSet<>();
-        task_status_map_ready.addAll(Arrays.asList(tasks));
+        // Allocating the reduce tasks
+        System.out.println("Starting the reduce task");
 
-        System.out.println(task_status_map_ready.size());
-
-        // Assigning each task to worker nodes
-//        if (WorkerHandler.workerSockets.size() > 0) {
-//            for(int availableWorker : WorkerHandler.availableNode.keySet()) {
-//                Socket socket_task = WorkerHandler.workerSockets.get(availableWorker);
-//                WorkerHandler.availableNode.remove(availableWorker);
-//                nodes_in_use.add(availableWorker);
-//            }
-//        }
+        // shuffling the intermediate data
+        System.out.println("Starting shuffling task");
+        // get all the object files returned byt the mapper
 
 
     }
@@ -141,8 +142,12 @@ public class PackageHandler implements Runnable {
             out.flush();
         } catch (IOException e) {
             System.out.println("Unable to assign task to Worker Node : " + socket_task);
-            e.printStackTrace();
+//            e.printStackTrace();
         }
+
+//        task.setStatus(Status.MAP_TASK);
+        task_handler.put(socketPort, task);
+        System.out.println("New job has been added to the task_handler");
 
     }
 }

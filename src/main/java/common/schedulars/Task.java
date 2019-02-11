@@ -16,11 +16,18 @@ public class Task implements Serializable {
     private final String outputFilePath;
     private Status status = Status.MAP_READY;
 
-    public Task(String inputFilePath, String outputFilePath, Class<? extends MapperBase> mapper, Class<? extends ReducerBase> reducer) {
+    private final int task_num;
+
+    public Task(String inputFilePath, String outputFilePath, Class<? extends MapperBase> mapper, Class<? extends ReducerBase> reducer, int task_num) {
         this.inputFilePath = inputFilePath;
         this.mapper = mapper;
         this.reducer = reducer;
         this.outputFilePath = outputFilePath;
+        this.task_num = task_num;
+    }
+
+    public int getTask_num() {
+        return task_num;
     }
 
     public Status getStatus() {

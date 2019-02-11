@@ -1,19 +1,21 @@
 package core.worker;
 
 import common.Status;
+import common.TaskStatus;
+import common.Tuple;
 import common.base.MapperBase;
 import common.base.ReducerBase;
+import common.collectors.Collector;
 import common.schedulars.Task;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-public class TaskHandler {
+public class TaskHandler<K, V> {
 
     private final Socket socket;
     private final String input;
@@ -21,10 +23,10 @@ public class TaskHandler {
     private final Class<? extends MapperBase> mapRunner;
     private final Class<? extends ReducerBase> reduceRunner;
     private final Status status;
-
+    private static String DATA_SEPARATOR = ":";
+    private int taskNumber = 78888;
     private MapperBase map = null;
     private ReducerBase reduce = null;
-
 
     public TaskHandler(Socket socket, Class<? extends MapperBase> mapper, Class<? extends ReducerBase> reducer, String input, String output, Status status) {
         this.socket = socket;
@@ -42,19 +44,25 @@ public class TaskHandler {
         this.input = task.getInputFilePath();
         this.output = task.getOutputFilePath();
         this.status = task.getStatus();
+        this.taskNumber = task.getTask_num();
     }
 
-    public Status runJob() {
+    public TaskStatus runJob() {
+
         if (this.status == Status.MAP_READY) {
-            this.mapExecute();
-            return Status.MAP_SUCCESS;
-        } else if (this.status == Status.REDUCE_READY) {
-            this.reduceExecute();
-            return Status.REDUCE_SUCCESS;
+            try {
+                return this.mapExecute();
+            } catch (IOException e) {
+                System.out.println("Fail to read file");
+                e.printStackTrace();
+            }
+        } else if (this.status == Status.MAP_SUCCESS) {
+//            this.reduceExecute(Task);
+            System.out.println("Reduce ready not yet implemented");
+            return new TaskStatus(taskNumber, Status.REDUCE_SUCCESS);
         }
         System.out.println("Unable to get the status");
-        return Status.JOB_FAIL;
-
+        return new TaskStatus(taskNumber, Status.JOB_FAIL);
     }
 
     private MapperBase getMapperInstance() {
@@ -80,7 +88,7 @@ public class TaskHandler {
         if (reduce == null) {
             try {
                 Constructor conRed = this.reduceRunner.getConstructor();
-                map = (MapperBase) conRed.newInstance();
+                reduce = (ReducerBase) conRed.newInstance();
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();
             } catch (IllegalAccessException e) {
@@ -95,61 +103,75 @@ public class TaskHandler {
         return reduce;
     }
 
-    private Status mapExecute() {
+    private TaskStatus mapExecute() throws IOException {
+
+        MapperBase mapMan = this.getMapperInstance();
         try {
+            System.out.println("Recieved input file at : " + input);
             BufferedReader bf = new BufferedReader(new FileReader(input));
             String line;
 
             while ((line = bf.readLine()) != null) {
-                if (line.trim().length() > 0) {
-                    String[] keys = line.trim().replaceAll("[-+.^:,'\"?!*#}]", "").split(" ");
-                    for (String key : keys) {
-                        // TODO Call map function every single time from the above reflection
-                        System.out.println(key);
-                    }
-                }
+                mapMan.map(new Tuple(line, 1), mapMan.getOut());
             }
 
-            // TODO Call reduce function for local reduction
-
-
-            // TODO Write Intermediate files to the disk
+            System.out.println("Total number of records processed " + mapMan.getOut().count());
+            mapMan.setIntermediate(mapMan.getOut().intermediateCollectors());
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            return Status.MAP_FAIL;
+            return new TaskStatus(taskNumber, Status.MAP_FAIL);
         } catch (IOException e) {
             e.printStackTrace();
-            return Status.MAP_FAIL;
+            return new TaskStatus(taskNumber, Status.MAP_FAIL);
         }
 
-        return Status.MAP_SUCCESS;
+        Tuple t = (Tuple) mapMan.getOut().toList().get(0);
+        String obj_path = writeFiles(mapMan.getOut());
+
+        return new TaskStatus(taskNumber, Status.MAP_SUCCESS);
     }
 
-    private Status reduceExecute() {
+    private String writeFiles(Collector c) {
+
+        File directory = new File(this.output + "//temp//");
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        String[] input_break = this.input.split("\\\\");
+        String filePath = directory.getAbsolutePath() + "\\" + input_break[input_break.length - 1] + taskNumber;
+        String filePath_obj = directory.getAbsolutePath() + "\\" + input_break[input_break.length - 1] + taskNumber + "-obj";
+
+        Writer writer = null;
+        FileOutputStream f = null;
+
         try {
-            BufferedReader bf = new BufferedReader(new FileReader(input));
-            String line;
-
-            while ((line = bf.readLine()) != null) {
-                if (line.trim().length() > 0) {
-
-                }
-            }
-
-            // TODO Call reduce function here
-
-            // TODO Write files to the disk
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return Status.REDUCE_FAIL;
+            f = new FileOutputStream(filePath_obj);
+            writer = Files.newBufferedWriter(Paths.get(filePath));
+            ObjectOutputStream objectOut = new ObjectOutputStream(f);
+            objectOut.writeObject(c);
+            objectOut.close();
         } catch (IOException e) {
             e.printStackTrace();
-            return Status.REDUCE_FAIL;
+        }
+        for (int i = 0; i < c.count(); i++) {
+            try {
+                writer.write(c.toList().get(i).toString() + System.lineSeparator());
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        }
+        try {
+            writer.close();
+            f.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        return Status.REDUCE_SUCCESS;
+        System.out.println("The Object  was succesfully written to a file: " + filePath);
+        return filePath_obj;
     }
+
 
 }

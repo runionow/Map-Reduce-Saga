@@ -17,6 +17,5 @@ public class StartWorker {
         // Do no start reducer until map job is completed
         Thread worker = new Thread(new ManagerConnect());
         worker.start();
-
     }
 }

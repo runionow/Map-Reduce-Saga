@@ -1,5 +1,7 @@
 package core.worker;
 
+import common.Status;
+import common.TaskStatus;
 import common.Tuple;
 import common.base.MapperBase;
 import common.base.ReducerBase;
@@ -8,15 +10,131 @@ import common.collectors.InCollector;
 import common.collectors.OutCollector;
 import common.schedulars.Task;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-public class ManagerConnect implements Runnable {
+
+public class ManagerConnect<K, V> implements Runnable {
+
+    List<String> objFile(String directory) {
+        List<String> textFiles = new ArrayList<String>();
+        File dir = new File(directory);
+        System.out.println(dir.toString());
+        for (File file : dir.listFiles()) {
+
+            System.out.println(file.toString());
+            if (file.getName().endsWith(("-obj"))) {
+                System.out.println("Found : " + file);
+                textFiles.add(file.toString());
+            }
+        }
+
+        return textFiles;
+    }
+
+    private Collector getCollectorFromFile(String filePath) {
+        try {
+            FileInputStream file_input = new FileInputStream(filePath);
+            ObjectInputStream objectIn = new ObjectInputStream(file_input);
+
+            Collector obj = (Collector) objectIn.readObject();
+            System.out.println("Collector now available");
+            objectIn.close();
+
+            return obj;
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    // For each reduce task the
+    public TaskStatus reduceExecute(String filePath) {
+        List<String> file_path = objFile(filePath);
+        Collector c1 = new Collector();
+        for (String file : file_path) {
+            System.out.println(file);
+            c1.add(getCollectorFromFile(file).toList());
+        }
+
+
+        TreeMap<?, ?> shuffling = (TreeMap<?, ?>) c1.intermediateCollectors();
+        System.out.println(shuffling.size());
+        for (Object key : shuffling.keySet()) {
+            System.out.println(key);
+        }
+
+        // TODO Iterate through every single value in collector
+        Reducer reduce = new Reducer();
+        reduce.reduce((Map<String, InCollector<String, Integer>>) shuffling, new Collector<>());
+        return new TaskStatus(1, Status.REDUCE_SUCCESS);
+    }
+
+    @Override
+    public void run() {
+        reduceExecute("D:\\arun\\output\\temp");
+
+        /**
+         * Set Maximum number of retries
+         */
+        int retryCount = 5;
+
+        try {
+            Socket socket = waitToConnect(retryCount);
+            MapperBase map = null;
+
+            try {
+                // [START] - Receive job request from manager
+                InputStream in = socket.getInputStream();
+                ObjectInputStream task_to_do = new ObjectInputStream(in);
+                Task task = (Task) task_to_do.readObject();
+                Task task1 = task;
+                TaskHandler th = new TaskHandler(socket, task1);
+                TaskStatus status = th.runJob(); // This can be a map job or an reduce job
+                System.out.println("Sending the status to Manager Node : " + status.getStatus());
+                // [END] - Receive job request from manager
+
+                // [START] sending the Response to Manager
+                OutputStream out = socket.getOutputStream();
+                ObjectOutputStream object = new ObjectOutputStream(out);
+                object.writeObject(status);
+                object.close();
+                out.close();
+                // [END] sending the Response to Manager
+
+            } catch (IOException e) {
+                System.out.println("Manager Disconnected");
+//                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                System.out.println("Class definition not matched");
+//                e.printStackTrace();
+            }
+            socket.close();
+
+        } catch (InterruptedException e) {
+            System.out.println("Manager Disconnected");
+//            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Restarting the node to let know the manager for new jobs");
+        // Upon successful completion start a new instance for new requests
+        Thread worker = new Thread(new ManagerConnect());
+        worker.start();
+    }
 
     public static int MANAGER_PORT = 9080;
 
@@ -48,97 +166,23 @@ public class ManagerConnect implements Runnable {
         return socket;
     }
 
-    @Override
-    public void run() {
-        /**
-         * Set Maximum number of retries
-         */
-        int retryCount = 5;
-
-        // [START] Map reduce test start
-        String inputPath = "D:\\DS\\Project MR\\src\\input\\input_1";
-        String outPath = "D:\\DS\\Project MR\\src\\output\\";
-
-        Task task1 = new Task(inputPath, outPath, Mapper.class, Reducer.class);
-        Socket socket12 = null;
-        TaskHandler th = new TaskHandler(socket12, task1);
-        th.runJob();
-        // [END] test
-
-        try {
-            Socket socket = waitToConnect(retryCount);
-            MapperBase map = null;
-
-            try {
-
-                // [START] - Receive job request
-                InputStream in = socket.getInputStream();
-                ObjectInputStream task_to_do = new ObjectInputStream(in);
-                Task task = (Task) task_to_do.readObject();
-                Constructor conMap = task.getMapper().getConstructor();
-                map = (MapperBase) conMap.newInstance();
-                map.map(new Tuple("String", 1), new Collector());
-                // [END] - Receive job request
-
-
-//                // Run the task - upon success send a message to the manager node
-//                // [START] Code for sending the Response to Manager
-//                OutputStream out = socket.getOutputStream();
-//                String data = "hello";
-//                out.write(data.getBytes(), 0, data.length());
-//                out.close();
-//                // [END] for sending the Response to manager
-
-                // TODO Destroy thread and restart Manager Connect
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            }
-
-        } catch (InterruptedException e) {
-            System.out.println("Manager Disconnected");
-//            e.printStackTrace();
-        }
-
-        // Keep the process alive
-        while (true) {
-
-        }
-    }
-
-    /**
-     * a. Creating your first mapper function
-     * =======================================
-     * 1. To create Mapper function create static Mapper Class extend MapperBase[common.base.MapperBase] Class
-     * 2. Override the base map function
-     */
-    public static class Mapper extends MapperBase {
-        @Override
-        public void map(Tuple t, OutCollector out) {
-            System.out.println("I am your Mapper");
-        }
-    }
-
     /**
      * b. Creating your first reduce function
      * ======================================
      * 1. To create Reducer function create static Reducer Class extend MapperBase[common.base.ReducerBase] Class
      * 2. Override the base reduce function
      */
-    public static class Reducer extends ReducerBase {
+    public static class Reducer extends ReducerBase<String, Integer> {
         @Override
-        public void reduce(InCollector in, OutCollector out) {
-            System.out.println("I am your Reducer");
+        public void reduce(Map<String, InCollector<String, Integer>> input, OutCollector<String, Integer> out) {
+            // Sum the intermediate results and put it in out
+            for (String key : input.keySet()) {
+                int count = input.get(key).count(); // Summing all the intermediate values, count is in a intermediate function which has count of number of tuples
+                System.out.println(key + " " + count);
+                out.collect(new Tuple(key, count));
+            }
         }
     }
+
+
 }
