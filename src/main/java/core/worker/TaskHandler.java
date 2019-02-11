@@ -14,6 +14,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
 
 public class TaskHandler<K, V> {
 
@@ -51,14 +54,15 @@ public class TaskHandler<K, V> {
 
         if (this.status == Status.MAP_READY) {
             try {
+                System.out.println("I  am in  map");
                 return this.mapExecute();
             } catch (IOException e) {
                 System.out.println("Fail to read file");
                 e.printStackTrace();
             }
-        } else if (this.status == Status.MAP_SUCCESS) {
-//            this.reduceExecute(Task);
-            System.out.println("Reduce ready not yet implemented");
+        } else if (this.status == Status.REDUCE_READY) {
+            System.out.println("Hello i am here");
+            this.reduceExecute(this.output);
             return new TaskStatus(taskNumber, Status.REDUCE_SUCCESS);
         }
         System.out.println("Unable to get the status");
@@ -80,7 +84,6 @@ public class TaskHandler<K, V> {
                 e.printStackTrace();
             }
         }
-
         return map;
     }
 
@@ -171,6 +174,93 @@ public class TaskHandler<K, V> {
 
         System.out.println("The Object  was succesfully written to a file: " + filePath);
         return filePath_obj;
+    }
+
+    List<String> objFile(String directory) {
+        List<String> textFiles = new ArrayList<String>();
+        File dir = new File(directory + "\\temp");
+        System.out.println(dir.toString());
+        for (File file : dir.listFiles()) {
+            if (file.getName().endsWith(("-obj"))) {
+                textFiles.add(file.toString());
+            }
+        }
+
+        return textFiles;
+    }
+
+    private Collector getCollectorFromFile(String filePath) {
+        try {
+            FileInputStream file_input = new FileInputStream(filePath);
+            ObjectInputStream objectIn = new ObjectInputStream(file_input);
+
+            Collector obj = (Collector) objectIn.readObject();
+            System.out.println("Collector now available");
+            objectIn.close();
+
+            return obj;
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+
+    public TaskStatus reduceExecute(String filePath) {
+        System.out.println("I am here");
+        Collector final_output = new Collector();
+
+        // [START] Shuffling
+        List<String> file_path = objFile(filePath);
+        Collector c1 = new Collector();
+        for (String file : file_path) {
+            System.out.println(file);
+            c1.add(getCollectorFromFile(file).toList());
+        }
+
+        TreeMap<?, ?> shuffling = (TreeMap<?, ?>) c1.intermediateCollectors();
+        System.out.println(shuffling.size());
+        for (Object key : shuffling.keySet()) {
+            System.out.println(key);
+        }
+        // [END] Shuffling
+
+        ReducerBase reduce = getReducerInstance();
+        reduce.reduce(shuffling, final_output);
+        writeFile(final_output);
+        return new TaskStatus(1, Status.REDUCE_SUCCESS);
+    }
+
+    private void writeFile(Collector out) {
+        File directory = new File(this.output);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        String filePath = directory.getAbsolutePath() + "\\" + "output_" + taskNumber;
+
+        Writer writer1 = null;
+
+        try {
+            writer1 = Files.newBufferedWriter(Paths.get(filePath));
+            for (int j = 0; j < out.count(); j++) {
+                try {
+                    writer1.write(out.toList().get(j).toString() + System.lineSeparator());
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(ex);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            writer1.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("The Object  was succesfully written to a file: " + filePath);
     }
 
 

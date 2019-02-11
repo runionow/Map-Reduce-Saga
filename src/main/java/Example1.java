@@ -29,13 +29,14 @@ public class Example1 {
      * =======================================
      * 1. To create Mapper function create static Mapper Class extend MapperBase[common.base.MapperBase] Class
      * 2. Override the base map function
+     * 3. Each line wil be an input to the map reduce program
      */
     public static class Mapper extends MapperBase<String, Integer> {
         @Override
         public void map(Tuple<String, Integer> t, Collector<String, Integer> out) {
             // For every row break into individual rows and add it to the collector
             if (t.getKey().trim().length() > 0) {
-                String[] keys = t.getKey().trim().replaceAll("[-+.^:,'\"?!*#}]", "").split(" ");
+                String[] keys = t.getKey().toLowerCase().trim().replaceAll("[-+.^:,'\"?!*#}]", "").split(" ");
                 for (String key : keys) {
                     out.collect(new Tuple<String, Integer>(key, 1));
                 }
@@ -48,13 +49,19 @@ public class Example1 {
      * ======================================
      * 1. To create Reducer function create static Reducer Class extend MapperBase[common.base.ReducerBase] Class
      * 2. Override the base reduce function
+     * 3. Write down on operation that has to be performed on the
      */
     public static class Reducer extends ReducerBase<String, Integer> {
         Map<String, Integer> output = new HashMap<>();
 
         @Override
         public void reduce(Map<String, InCollector<String, Integer>> input, OutCollector<String, Integer> out) {
-            System.out.println("I'm your reducer");
+            // Sum the intermediate results and put it in out
+            for (String key : input.keySet()) {
+                int count = input.get(key).count(); // Summing all the intermediate values, count is in a intermediate function which has count of number of tuples
+                System.out.println(key + " " + count);
+                out.collect(new Tuple(key, count));
+            }
         }
     }
 

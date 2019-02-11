@@ -1,5 +1,6 @@
 package core.master;
 
+import common.Status;
 import common.base.MapperBase;
 import common.base.ReducerBase;
 import common.schedulars.Job;
@@ -114,12 +115,45 @@ public class PackageHandler implements Runnable {
 
         System.out.println("Map tasks are now completed");
 
-        // Allocating the reduce tasks
-        System.out.println("Starting the reduce task");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         // shuffling the intermediate data
         System.out.println("Starting shuffling task");
+
+        // Allocating the reduce tasks
+        System.out.println("Starting the reduce task");
+
         // get all the object files returned byt the mapper
+
+
+        // Creating a task for Reduce operation
+        boolean availableCount = WorkerHandler.availableNode.size() > 1;
+        Task reduceTask = null;
+        while (availableCount) {
+            reduceTask = new Task(recievedJob.getOutput(),
+                    recievedJob.getOutput(),
+                    recievedJob.getMapper(),
+                    recievedJob.getReducer(), 9);
+            reduceTask.setStatus(Status.REDUCE_READY);
+            availableCount = false;
+        }
+
+
+        for (int i : WorkerHandler.availableNode.keySet()) {
+            System.out.println(i);
+            sendTask(reduceTask, i);
+            break;
+//            if (stack_final.isEmpty() && stack_in_progress.isEmpty()) {
+//                break;
+//            }
+        }
+
+        System.out.println("Reduce task has been completed");
+
 
 
     }
