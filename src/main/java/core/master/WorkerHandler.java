@@ -3,7 +3,8 @@ package core.master;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -11,8 +12,8 @@ public class WorkerHandler implements Runnable {
     private static final int WORKER_PORT = 9080;
     private static final int BUFFER_SIZE = 2044;
 
-    public static volatile HashMap<Integer, Socket> workerSockets = new HashMap<>();
-    public static volatile HashMap<Integer, Socket> availableNode = new HashMap<>();
+    public static volatile Map<Integer, Socket> workerSockets = new ConcurrentHashMap<>();
+    public static volatile Map<Integer, Socket> availableNode = new ConcurrentHashMap<>();
 
     final ExecutorService clientProcessingPool = Executors.newFixedThreadPool(5);
 

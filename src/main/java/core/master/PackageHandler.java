@@ -94,6 +94,7 @@ public class PackageHandler implements Runnable {
         availableNodes.putAll(WorkerHandler.workerSockets);
 
         // Insert all the jobs into the Map
+        // Every task has a default status of
         for (int i = 0; i < recievedJob.getInput().size(); i++) {
             stack_final.push(new Task(file_chunks.get(i),
                     recievedJob.getOutput(),
@@ -104,13 +105,26 @@ public class PackageHandler implements Runnable {
 
         // Wait until all the tasks are executes
         while (!stack_final.isEmpty()) {
-            for (int i : WorkerHandler.availableNode.keySet()) {
-                sendTask(stack_final.pop(), i);
-                if (stack_final.isEmpty() && stack_in_progress.isEmpty()) {
-                    break;
+            while (!WorkerHandler.availableNode.isEmpty()) {
+                for (Integer key : WorkerHandler.availableNode.keySet()) {
+                    WorkerHandler.availableNode.remove(key);
+                    if (stack_final.isEmpty() && stack_in_progress.isEmpty()) {
+                        break;
+                    }
+                    sendTask(stack_final.pop(), key);
                 }
+
             }
-            break;
+            if (WorkerHandler.availableNode.isEmpty() && !stack_final.isEmpty()) {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("Waiting for nodes to complete the task and looking for new nodes to join the orchestration");
+            } else {
+                break;
+            }
         }
 
         System.out.println("Map tasks are now completed");
@@ -121,14 +135,8 @@ public class PackageHandler implements Runnable {
             e.printStackTrace();
         }
 
-        // shuffling the intermediate data
-        System.out.println("Starting shuffling task");
-
         // Allocating the reduce tasks
         System.out.println("Starting the reduce task");
-
-        // get all the object files returned byt the mapper
-
 
         // Creating a task for Reduce operation
         boolean availableCount = WorkerHandler.availableNode.size() > 1;
@@ -147,21 +155,10 @@ public class PackageHandler implements Runnable {
             System.out.println(i);
             sendTask(reduceTask, i);
             break;
-//            if (stack_final.isEmpty() && stack_in_progress.isEmpty()) {
-//                break;
-//            }
         }
 
         System.out.println("Reduce task has been completed");
-
-
-
     }
-
-    // check if all the map chunks are executed are not
-
-    // Check if all the tasks are completed or not
-
 
     public void sendTask(Task task, int socketPort) {
         OutputStream out = null;
