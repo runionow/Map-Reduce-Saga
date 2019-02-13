@@ -115,6 +115,7 @@ public class TaskHandler<K, V> {
             String line;
 
             while ((line = bf.readLine()) != null) {
+                mapMan.getOut().setFileName(input);
                 mapMan.map(new Tuple(line, 1), mapMan.getOut());
             }
 

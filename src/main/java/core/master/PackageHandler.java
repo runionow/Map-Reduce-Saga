@@ -130,7 +130,7 @@ public class PackageHandler implements Runnable {
         System.out.println("Map tasks are now completed");
 
         try {
-            Thread.sleep(5000);
+            Thread.sleep(6000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
