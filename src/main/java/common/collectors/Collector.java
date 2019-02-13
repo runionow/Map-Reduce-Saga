@@ -11,6 +11,7 @@ public class Collector<Key, Value> implements InCollector<Key, Value>, OutCollec
     private List<Tuple<Key,Value>> inter_tuples = new CopyOnWriteArrayList<>();
     private Iterator<Tuple<Key,Value>> tuple_iter = null;
     private Map<Key, Value> final_sol = new TreeMap<>();
+    private String fileName = null;
 
     public List<Tuple<Key,Value>> toList()
     {
@@ -51,6 +52,16 @@ public class Collector<Key, Value> implements InCollector<Key, Value>, OutCollec
         }
         return out;
     }
+
+    public String getFileName() {
+        return this.fileName;
+    }
+
+    // To keep the details of the current context
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
 
 
     @Override

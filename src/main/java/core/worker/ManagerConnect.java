@@ -30,6 +30,8 @@ public class ManagerConnect<K, V> implements Runnable {
                 ObjectInputStream task_to_do = new ObjectInputStream(in);
                 Task task = (Task) task_to_do.readObject();
                 Task task1 = task;
+                System.out.println(task.getInputFilePath());
+                System.out.println(task.getMapper());
                 TaskHandler th = new TaskHandler(socket, task1);
                 System.out.println("recieved Task");
                 TaskStatus status = th.runJob(); // This can be a map job or an reduce job

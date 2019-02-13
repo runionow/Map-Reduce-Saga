@@ -238,7 +238,7 @@ public class TaskHandler<K, V> {
             directory.mkdirs();
         }
         String filePath = directory.getAbsolutePath() + "\\" + "output_" + taskNumber;
-
+        System.out.println("REducer :" + filePath);
         Writer writer1 = null;
 
         try {

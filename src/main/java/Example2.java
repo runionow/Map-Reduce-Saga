@@ -9,10 +9,16 @@ import common.schedulars.Job;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+/**
+ * Example 2: Inverted Index
+ */
 
 public class Example2 {
+
     public static void main(String[] args) {
 
         ArrayList<String> filePath = new ArrayList<>();
@@ -23,8 +29,8 @@ public class Example2 {
 
         for (String file : files) {
             filePath.add(helper + "\\" + file);
-//            System.out.println(helper+"\\"+file);
         }
+
 
         /**
          * c. Creating your first Map Reduce Job
@@ -33,11 +39,11 @@ public class Example2 {
          * 2. Attach Mapper Definition , Reducer Definition, All the individual file chunks array list
          *    to job defintion
          */
-        Job job = new Job(Example1.Mapper.class
-                , Example1.Reducer.class,
+        Job job = new Job(Mapper.class
+                , Reducer.class,
                 filePath,
-                "/arun/output",
-                "Word count");
+                "/arun/output2",
+                "Inverted Index");
 
         /**
          * d. Executing the job
@@ -54,10 +60,16 @@ public class Example2 {
      * 2. Override the base map function
      * 3. Each line wil be an input to the map reduce program
      */
-    public static class Mapper extends MapperBase<String, Integer> {
+    public static class Mapper extends MapperBase<String, String> {
         @Override
-        public void map(Tuple<String, Integer> t, Collector<String, Integer> out) {
-
+        public void map(Tuple<String, String> t, Collector<String, String> out) {
+            if (t.getKey().trim().length() > 0) {
+                // Triming every
+                String[] keys = t.getKey().toLowerCase().trim().replaceAll("[-+.^:,'\"?!*#}]", "").split(" ");
+                for (String key : keys) {
+                    out.collect(new Tuple(key, out.getFileName()));
+                }
+            }
         }
     }
 
@@ -68,13 +80,21 @@ public class Example2 {
      * 2. Override the base reduce function
      * 3. Write down on operation that has to be performed on the
      */
-    public static class Reducer extends ReducerBase<String, Integer> {
-        Map<String, Integer> output = new HashMap<>();
-
+    public static class Reducer extends ReducerBase<String, String> {
         @Override
-        public void reduce(Map<String, InCollector<String, Integer>> input, OutCollector<String, Integer> out) {
-
+        public void reduce(Map<String, InCollector<String, String>> input, OutCollector<String, String> out) {
+            Set<String> set = new HashSet<>();
+            for (String key : input.keySet()) {
+                Collector c1 = (Collector) input.get(key);
+                for (int i = 0; i < c1.toList().size(); i++) {
+                    Tuple t = (Tuple) c1.toList().get(i);
+                    System.out.println(t.toString());
+                    set.add((String) t.getValue());
+                }
+                out.collect(new Tuple(key, set.size())); // Adding unique document size to the final output
+            }
         }
     }
+
 
 }
